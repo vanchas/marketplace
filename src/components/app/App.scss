@@ -1,0 +1,70 @@
+.App {
+	display: flex;
+	position: relative;
+}
+.App-content {
+	width: 100%;
+}
+.App-main {
+	min-height: 100vh;
+	width: 100%;
+}
+
+// PWA prompt
+
+.pwa-wrapper {
+	z-index: 9;
+	position: absolute;
+	bottom: 0;
+	width: 100%;
+	height: 8em;
+	background-color: #fff;
+  display: grid;
+  box-shadow: 0 -15px 15px 5px rgba(0, 0, 0, 0.05);
+	// transform: translateY(100%);
+
+	.pwa-content {
+		display: grid;
+		grid-template-columns: 2fr 5fr 1fr;
+		justify-content: center;
+		justify-items: center;
+		padding: .5em .5em 0 .5em;
+
+		.pwa-img {
+			align-self: center;
+			img {
+				width: 4em;
+			}
+		}
+		.pwa-text {
+			align-self: center;
+			h3 {
+				margin: .3em 0 0 0;
+			}
+		}
+		.pwa-close-btn {
+      align-self: start;
+			button {
+        height: 1em;
+        padding: 0;
+				background: none;
+				border: none;
+				font-size: 2.5em;
+				color: #777;
+			}
+		}
+	}
+	.pwa-add-btn {
+		display: grid;
+		justify-content: end;
+		padding: 0 .8em .8em .8em;
+		align-content: center;
+		button {
+			background-color: #4f8df4;
+			border: none;
+			border-radius: 2px;
+			color: #fff;
+			padding: .4em 1em;
+		}
+	}
+}

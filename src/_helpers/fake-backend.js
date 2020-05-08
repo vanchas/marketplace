@@ -1,0 +1,195 @@
+import { Role } from './'
+
+export function configureFakeBackend() {
+  let users = [
+    {
+      id: 1,
+      username: 'admin',
+      password: 'admin',
+      firstName: 'Admin',
+      lastName: 'User',
+      role: Role.Admin,
+      name: "Kirill",
+      second_name: null,
+      email: null,
+      phone: "380953444348",
+      rating: null,
+      position: null,
+      telegram: null,
+      viber: null,
+      whatsapp: null,
+      site: null,
+      avatar: null,
+      email_verified_at: null,
+      activate: 1,
+      bx_id: 26,
+      created_at: "2020-04-28T08:28:16.000000Z",
+      updated_at: "2020-04-28T08:28:34.000000Z",
+      deleted_at: null
+    },
+    {
+      id: 1,
+      username: 'user',
+      password: 'user',
+      firstName: 'Ivan',
+      lastName: 'User',
+      role: Role.Admin,
+      name: "Kirill",
+      second_name: null,
+      email: null,
+      phone: "380953444348",
+      rating: null,
+      position: null,
+      telegram: null,
+      viber: null,
+      whatsapp: null,
+      site: null,
+      avatar: null,
+      email_verified_at: null,
+      activate: 1,
+      bx_id: 26,
+      created_at: "2020-04-28T08:28:16.000000Z",
+      updated_at: "2020-04-28T08:28:34.000000Z",
+      deleted_at: null
+    }
+  ];
+
+  let realFetch = window.fetch;
+  window.fetch = function (url, opts) {
+    const authHeader = opts.headers['Authorization'];
+    const isLoggedIn = authHeader && authHeader.startsWith('Bearer fake-jwt-token');
+    const roleString = isLoggedIn && authHeader.split('.')[1];
+    const role = roleString ? Role[roleString] : null;
+
+    return new Promise((resolve, reject) => {
+      // wrap in timeout to simulate server api call
+      setTimeout(() => {
+        // authenticate - public
+        if (url.endsWith('/api/auth/login') && opts.method === 'POST') {
+          const params = JSON.parse(opts.body);
+          const user = users.find(x => x.username === params.username && x.password === params.password);
+          if (!user) return error('Username or password is incorrect');
+          return ok({
+            id: user.id,
+            username: user.username,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            role: user.role,
+            token: `fake-jwt-token.${user.role}`,
+            name: user.name,
+            second_name: user.second_name,
+            email: user.email,
+            phone: user.phone,
+            rating: user.rating,
+            position: user.position,
+            telegram: user.telegram,
+            viber: user.viber,
+            whatsapp: user.whatsapp,
+            site: user.site,
+            avatar: user.avatar,
+            email_verified_at: user.email_verified_at,
+            activate: user.activate,
+            bx_id: user.bx_id,
+            created_at: user.created_at,
+            updated_at: user.updated_at,
+            deleted_at: user.deleted_at
+          });
+        }
+
+        if (url.endsWith('/api/auth/register') && opts.method === 'POST') {
+          const params = JSON.parse(opts.body);
+          const user = {
+            id: users.length + 1,
+            username: params.username,
+            password: params.password,
+            firstName: 'Normal',
+            lastName: Role.User,
+            name: null,
+            second_name: null,
+            email: null,
+            phone: null,
+            rating: null,
+            position: null,
+            telegram: null,
+            viber: null,
+            whatsapp: null,
+            site: null,
+            avatar: null,
+            email_verified_at: null,
+            activate: null,
+            bx_id: null,
+            created_at: null,
+            updated_at: null,
+            deleted_at: null
+          };
+          users.push(user);
+
+          return ok({
+            id: user.id,
+            username: user.username,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            role: user.role,
+            token: `fake-jwt-token.${user.role}`,
+            name: user.name,
+            second_name: user.second_name,
+            email: user.email,
+            phone: user.phone,
+            rating: user.rating,
+            position: user.position,
+            telegram: user.telegram,
+            viber: user.viber,
+            whatsapp: user.whatsapp,
+            site: user.site,
+            avatar: user.avatar,
+            email_verified_at: user.email_verified_at,
+            activate: user.activate,
+            bx_id: user.bx_id,
+            created_at: user.created_at,
+            updated_at: user.updated_at,
+            deleted_at: user.deleted_at
+          });
+        }
+
+        // get user by id - admin or user (user can only access their own record)
+        if (url.match(/\/users\/\d+$/) && opts.method === 'GET') {
+          if (!isLoggedIn) return unauthorised();
+
+          // get id from request url
+          let urlParts = url.split('/');
+          let id = parseInt(urlParts[urlParts.length - 1]);
+
+          // only allow normal users access to their own record
+          const currentUser = users.find(x => x.role === role);
+          if (id !== currentUser.id && role !== Role.Admin) return unauthorised();
+
+          const user = users.find(x => x.id === id);
+          return ok(user);
+        }
+
+        // get all users - admin only
+        if (url.endsWith('/users') && opts.method === 'GET') {
+          if (role !== Role.Admin) return unauthorised();
+          return ok(users);
+        }
+
+        // pass through any requests not handled above
+        realFetch(url, opts).then(response => resolve(response));
+
+        // private helper functions
+
+        function ok(body) {
+          resolve({ ok: true, text: () => Promise.resolve(JSON.stringify(body)) })
+        }
+
+        function unauthorised() {
+          resolve({ status: 401, text: () => Promise.resolve(JSON.stringify({ message: 'Unauthorised' })) })
+        }
+
+        function error(message) {
+          resolve({ status: 400, text: () => Promise.resolve(JSON.stringify({ message })) })
+        }
+      }, 500);
+    });
+  }
+}
